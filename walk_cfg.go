@@ -19,7 +19,8 @@ type walkConfig struct {
 	filter *cond.Cond
 	limit  ratelimit.Limiter
 	co     *lua.LState
-	pipe   *pipe.Px
+	pipe   *pipe.Chains
+	Finish *pipe.Chains
 }
 
 //local w = file.walk("/var/logs")

@@ -29,7 +29,7 @@ type LScan struct {
 	fd     *os.File
 	err    error
 	vsh    *vswitch.Switch
-	pipe   *pipe.Px
+	pipe   *pipe.Chains
 	co     *lua.LState
 }
 

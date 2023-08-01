@@ -55,6 +55,14 @@ func (i LInfo) MTime() int64 {
 	return 0
 }
 
+func (i LInfo) showL(L *lua.LState) int {
+	if L.Console == nil {
+		return 0
+	}
+	L.Output(i.String())
+	return 0
+}
+
 func (i LInfo) ReadAll() []byte {
 	f, err := os.Open(i.path)
 	if err != nil {
@@ -111,6 +119,10 @@ func (i LInfo) Index(L *lua.LState, key string) lua.LValue {
 
 	case "not_ext":
 		return lua.LBool(i.ext == "")
+
+	case "show":
+		return lua.NewFunction(i.showL)
+
 	}
 
 	return lua.LNil

@@ -2,8 +2,8 @@ package file
 
 import (
 	cond "github.com/vela-ssoc/vela-cond"
-	"github.com/vela-ssoc/vela-kit/pipe"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/pipe"
 	"go.uber.org/ratelimit"
 	"time"
 )
@@ -107,6 +107,11 @@ func (w *walk) deepL(L *lua.LState) int {
 	return 0
 }
 
+func (w *walk) onFinishL(L *lua.LState) int {
+	w.cfg.Finish = pipe.NewByLua(L)
+	return 0
+}
+
 func (w *walk) Index(L *lua.LState, key string) lua.LValue {
 	switch key {
 	case "dir":
@@ -135,6 +140,8 @@ func (w *walk) Index(L *lua.LState, key string) lua.LValue {
 		return L.NewFunction(w.scanL)
 	case "zip":
 		return L.NewFunction(w.zip)
+	case "on_finish":
+		return L.NewFunction(w.onFinishL)
 
 	}
 	return lua.LNil

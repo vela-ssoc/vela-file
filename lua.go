@@ -2,8 +2,8 @@ package file
 
 import (
 	"fmt"
-	"github.com/vela-ssoc/vela-kit/vela"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/vela"
 	"io"
 	"os"
 )
@@ -82,38 +82,53 @@ func newLuaFileScan(L *lua.LState) int {
 }
 
 func newLuaFileReadAll(L *lua.LState) int {
-	var data []byte
-	var err error
+	content := &Content{}
 	var fd *os.File
 
-	path := L.CheckString(1)
-	fd, err = os.Open(path)
-	if err != nil {
-		goto ERROR
+	todo := func() int {
+		L.Use(content)
+		return 1
 	}
+
+	path := L.CheckString(1)
+	fd, err := os.Open(path)
+	if err != nil {
+		content.err = err
+		return todo()
+	}
+
 	defer fd.Close()
 
-	if stat, er := fd.Stat(); er != nil {
-		goto ERROR
-	} else {
-		if stat.Size() > max {
-			err = fmt.Errorf("%s too big , size:%d > %d", path, stat.Size(), max)
-			goto ERROR
-		}
-	}
-
-	data, err = io.ReadAll(fd)
+	stat, err := fd.Stat()
 	if err != nil {
-		goto ERROR
+		content.err = err
+		return todo()
 	}
 
-	L.Push(lua.B2L(data))
-	return 1
+	if stat.Size() > max {
+		content.err = fmt.Errorf("%s too big , size:%d > %d", path, stat.Size(), max)
+		return todo()
+	}
 
-ERROR:
-	L.Push(lua.LNil)
-	L.Push(lua.S2L(err.Error()))
-	return 2
+	data, err := io.ReadAll(fd)
+	if err != nil {
+		return todo()
+	}
+
+	content.data = data
+	return todo()
+}
+
+func newLuaFileTypeL(L *lua.LState) int {
+	path := L.CheckString(1)
+	if len(path) == 0 {
+		L.RaiseError("invalid file path")
+		return 0
+	}
+
+	ft := Filetype(path)
+	L.Push(ft)
+	return 1
 }
 
 func WithEnv(env vela.Environment) {
@@ -123,9 +138,11 @@ func WithEnv(env vela.Environment) {
 	file.Set("dir", lua.NewFunction(newLuaFileDir))
 	file.Set("stat", lua.NewFunction(newLuaFileStat))
 	file.Set("walk", lua.NewFunction(newLuaFileWalk))
+	file.Set("find", lua.NewFunction(newLuaFileWalk))
 	file.Set("glob", lua.NewFunction(newLuaFileGlob))
 	file.Set("scan", lua.NewFunction(newLuaFileScan))
 	file.Set("read_all", lua.NewFunction(newLuaFileReadAll))
 	file.Set("cat", lua.NewFunction(newLuaFileReadAll))
+	file.Set("type", lua.NewFunction(newLuaFileTypeL))
 	env.Global("file", file)
 }

@@ -3,8 +3,8 @@ package file
 import (
 	"fmt"
 	"github.com/vela-ssoc/vela-kit/grep"
-	"github.com/vela-ssoc/vela-kit/pipe"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/pipe"
 	"path/filepath"
 )
 
@@ -46,6 +46,7 @@ func (d *dir) visit(L *lua.LState) int {
 		if len(d.filter) > 0 && !match(fi.path, d.filter) {
 			continue
 		}
+
 		d.pipe.Do(fi, co, func(err error) {
 			xEnv.Errorf("%s pipe call fail %v", fi.path, err)
 		})
@@ -91,6 +92,27 @@ func (d *dir) r() lua.LValue {
 	return rv
 }
 
+func (d *dir) showL(L *lua.LState) int {
+	if L.Console == nil {
+		return 0
+	}
+
+	if !d.ok() {
+		return 0
+	}
+
+	n := len(d.data)
+	if n == 0 {
+		return 0
+	}
+
+	for i := 0; i < n; i++ {
+		L.Output(d.Info(i).String())
+	}
+
+	return 0
+}
+
 func (d *dir) Index(L *lua.LState, key string) lua.LValue {
 	switch key {
 	case "ok":
@@ -109,6 +131,9 @@ func (d *dir) Index(L *lua.LState, key string) lua.LValue {
 		return L.NewFunction(d.pipeL)
 	case "result":
 		return d.r()
+
+	case "show":
+		return lua.NewFunction(d.showL)
 	}
 
 	return lua.LNil

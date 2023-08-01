@@ -1,7 +1,7 @@
 package file
 
 import (
-	"github.com/vela-ssoc/vela-kit/execpt"
+	"github.com/vela-ssoc/vela-kit/exception"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
 	"os"
@@ -11,9 +11,9 @@ import (
 type glob struct {
 	co       *lua.LState
 	patterns []string
-	pipe     *pipe.Px
+	pipe     *pipe.Chains
 	result   []string
-	err      *execpt.Cause
+	err      *exception.Cause
 }
 
 func (gl *glob) visit(path string) {

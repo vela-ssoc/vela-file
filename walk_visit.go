@@ -2,6 +2,7 @@ package file
 
 import (
 	"github.com/vela-ssoc/vela-kit/audit"
+	"github.com/vela-ssoc/vela-kit/lua"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -160,6 +161,25 @@ func (w *walk) scan() {
 			w.readDirNames(wkItem{path: path, depth: 1})
 		}
 	}
+
+}
+
+func (w *walk) Finish() {
+	if w.cfg.Finish == nil {
+		return
+	}
+
+	r := lua.NewMap(2, true)
+	r.Set("dir", lua.LInt(w.dirs))
+	r.Set("file", lua.LInt(w.files))
+	r.Set("total", lua.LInt(w.files+w.dirs))
+
+	co := xEnv.Clone(w.cfg.co)
+	defer xEnv.Free(co)
+
+	w.cfg.Finish.Do(r, co, func(err error) {
+		xEnv.Errorf("file walk fail %v", err)
+	})
 }
 
 func (w *walk) handle() {

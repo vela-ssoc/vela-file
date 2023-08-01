@@ -11,7 +11,7 @@ type dir struct {
 	path   string
 	data   []os.DirEntry
 	filter []func(string) bool
-	pipe   *pipe.Px
+	pipe   *pipe.Chains
 	err    error
 }
 
